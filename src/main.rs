@@ -6,6 +6,9 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+extern crate chrono;
+use chrono::prelude::*;
+
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -48,14 +51,13 @@ fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
 }
 
 fn stories_to_gophermap(stories: Vec<Story>) -> String {
-    let mut s = String::new();
+    let utc: DateTime<Utc> = Utc::now();
+    let mut s = String::from(format!("Last updated at {}\n\n", utc));
     for story in stories {
-        let story_line = format!("h{}\tURL:{}", story.title, story.short_id_url);
-        let comment_line = format!("h[{}] Comments\tURL:{}", story.comment_count, story.comments_url);
+        let story_line = format!("h{}\tURL:{}\n", story.title, story.short_id_url);
+        let comment_line = format!("h[{}] Comments\tURL:{}\n", story.comment_count, story.comments_url);
         s.push_str(&story_line);
-        s.push_str("\n");
         s.push_str(&comment_line);
-        s.push_str("\n");
     }
     s
 }
