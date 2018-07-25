@@ -1,0 +1,11 @@
+[package]
+name = "gophsters"
+version = "0.1.0"
+authors = ["Julien Blanchard <julien@sideburns.eu>"]
+
+[dependencies]
+hyper = "0.12"
+hyper-tls = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
