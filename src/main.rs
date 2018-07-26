@@ -22,7 +22,7 @@ use hyper::Client;
 use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
 
-const API_URL: &'static str = "https://lobste.rs/newest.json";
+const API_URL: &'static str = "https://lobste.rs/hottest.json";
 
 fn main() {
     let url = API_URL.parse().unwrap();
