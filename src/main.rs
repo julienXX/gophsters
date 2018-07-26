@@ -55,7 +55,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
     s.push_str(&title());
     for story in stories {
         let story_line = format!("h[{}] - {}\tURL:{}\n", story.upvotes, story.title, story.short_id_url);
-        let meta_line = format!("{} | {}\n", pretty_date(story.created_at), story.tags.join(", "));
+        let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(story.created_at), story.submitter_user.username, story.tags.join(", "));
         let comment_line = format!("h> {} comments\tURL:{}\n\n", story.comment_count, story.comments_url);
         s.push_str(&story_line);
         s.push_str(&meta_line);
@@ -125,7 +125,13 @@ struct Story {
     comment_count: u8,
     short_id_url: String,
     comments_url: String,
-    tags: Vec<String>
+    tags: Vec<String>,
+    submitter_user: User,
+}
+
+#[derive(Deserialize, Debug)]
+struct User {
+    username: String,
 }
 
 // Define a type so we can return multiple types of errors
