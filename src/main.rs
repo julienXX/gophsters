@@ -52,7 +52,7 @@ fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
 
 fn stories_to_gophermap(stories: Vec<Story>) -> String {
     let mut gophermap = String::new();
-    gophermap.push_str(&title());
+    gophermap.push_str(&main_title());
     for story in stories {
         println!("Building story: {}", story.title);
 
@@ -88,7 +88,7 @@ fn build_comments_for(story: Story) {
 
 fn build_comments_page(comments: Vec<Comment>) -> String {
     let mut c = String::new();
-    c.push_str(&title());
+    c.push_str(&comment_title());
     for comment in comments {
         let meta_line = indent_comment(format!("{} commented:\n", comment.commenting_user.username), comment.indent_level);
         let comment_line = format!("{}\n", indent_comment(cleanup(comment.comment), comment.indent_level));
@@ -112,7 +112,7 @@ fn cleanup(comment: String) -> String {
     result.to_string()
 }
 
-fn title() -> String {
+fn main_title() -> String {
     let utc = Utc::now().format("%a %b %e %T %Y").to_string();
     format!("
  .----------------.
@@ -127,9 +127,31 @@ fn title() -> String {
 | '--------------' |
  '----------------'
 
+This is an unofficial Lobste.rs mirror on gopher.
+You can find the 25 hottest stories and their comments.
+Sync happens every 10 minutes or so.
+
 Last updated {}
 
 ", utc)
+}
+
+fn comment_title() -> String {
+    "
+ .----------------.
+| .--------------. |
+| |   _____      | |
+| |  |_   _|     | |
+| |    | |       | |
+| |    | |   _   | |
+| |   _| |__/ |  | |
+| |  |________|  | |
+| |              | |
+| '--------------' |
+ '----------------'
+
+
+".to_owned()
 }
 
 fn pretty_date(date_string: &String) -> String {
