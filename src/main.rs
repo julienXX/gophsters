@@ -29,7 +29,6 @@ fn main() {
 
     let fut = fetch_stories(url)
         .map(|stories| {
-            println!("stories: {:#?}", stories);
             create_gophermap(stories).unwrap();
         })
         .map_err(|e| {
@@ -40,6 +39,8 @@ fn main() {
         });
 
     rt::run(fut);
+
+    println!("Done.")
 }
 
 fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
@@ -53,6 +54,8 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
     let mut gophermap = String::new();
     gophermap.push_str(&title());
     for story in stories {
+        println!("Building story: {}", story.title);
+
         let story_line = format!("h[{}] - {}\tURL:{}\n", story.upvotes, story.title, story.short_id_url);
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
         let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
