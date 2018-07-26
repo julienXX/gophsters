@@ -51,15 +51,45 @@ fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
 }
 
 fn stories_to_gophermap(stories: Vec<Story>) -> String {
-    let utc: DateTime<Utc> = Utc::now();
-    let mut s = String::from(format!("Last updated at {}\n\n", utc));
+    let mut s = String::new();
+    s.push_str(&title());
     for story in stories {
-        let story_line = format!("h{}\tURL:{}\n", story.title, story.short_id_url);
-        let comment_line = format!("h[{}] Comments\tURL:{}\n", story.comment_count, story.comments_url);
+        let story_line = format!("h[{}] - {}\tURL:{}\n", story.upvotes, story.title, story.short_id_url);
+        let meta_line = format!("{} | {}\n", pretty_date(story.created_at), story.tags.join(", "));
+        let comment_line = format!("h> {} comments\tURL:{}\n\n", story.comment_count, story.comments_url);
         s.push_str(&story_line);
+        s.push_str(&meta_line);
         s.push_str(&comment_line);
     }
     s
+}
+
+fn title() -> String {
+    let utc = Utc::now().format("%a %b %e %T %Y").to_string();
+    format!("
+ .----------------.
+| .--------------. |
+| |   _____      | |
+| |  |_   _|     | |
+| |    | |       | |
+| |    | |   _   | |
+| |   _| |__/ |  | |
+| |  |________|  | |
+| |              | |
+| '--------------' |
+ '----------------'
+
+Last updated {}
+
+", utc)
+}
+
+fn pretty_date(date_string: String) -> String {
+    let parsed_date = date_string.parse::<DateTime<Utc>>();
+    match parsed_date {
+        Ok(date) => date.format("%a %b %e %T %Y").to_string(),
+        Err(_e)  => Utc::now().format("%a %b %e %T %Y").to_string(),
+    }
 }
 
 fn fetch_json(url: hyper::Uri) -> impl Future<Item=Vec<Story>, Error=FetchError> {
@@ -90,10 +120,12 @@ fn fetch_json(url: hyper::Uri) -> impl Future<Item=Vec<Story>, Error=FetchError>
 struct Story {
     title: String,
     created_at: String,
-    score: u8,
+    upvotes: u8,
+    score: i8,
     comment_count: u8,
     short_id_url: String,
     comments_url: String,
+    tags: Vec<String>
 }
 
 // Define a type so we can return multiple types of errors
