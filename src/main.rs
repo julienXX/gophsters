@@ -50,6 +50,10 @@ fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
     Ok(())
 }
 
+fn termination_line() -> String {
+    "\r\n.".to_owned()
+}
+
 fn stories_to_gophermap(stories: Vec<Story>) -> String {
     let mut gophermap = String::new();
     gophermap.push_str(&main_title());
@@ -65,6 +69,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
         gophermap.push_str(&meta_line);
         gophermap.push_str(&comment_line);
     }
+    gophermap.push_str(&termination_line());
     gophermap
 }
 
@@ -73,7 +78,7 @@ fn build_comments_for(story: Story) {
     let fut = fetch_comments(url)
         .map(|(comments, short_id)| {
             let mut f = File::create(format!("{}.txt", short_id)).unwrap();
-            let coms = build_comments_page(comments);
+            let coms = build_comments_page(comments, story);
             f.write_all(&coms.as_bytes()).expect("could not write file");
         })
         .map_err(|e| {
@@ -86,15 +91,16 @@ fn build_comments_for(story: Story) {
     rt::run(fut);
 }
 
-fn build_comments_page(comments: Vec<Comment>) -> String {
+fn build_comments_page(comments: Vec<Comment>, story: Story) -> String {
     let mut c = String::new();
-    c.push_str(&comment_title());
+    c.push_str(&comment_title(story));
     for comment in comments {
-        let meta_line = indent_comment(format!("{} commented:\n", comment.commenting_user.username), comment.indent_level);
+        let meta_line = indent_comment(format!("> {} commented:\n", comment.commenting_user.username), comment.indent_level);
         let comment_line = format!("{}\n", indent_comment(cleanup(comment.comment), comment.indent_level));
         c.push_str(&meta_line);
         c.push_str(&comment_line);
     }
+    c.push_str(&termination_line());
     c
 }
 
@@ -108,7 +114,14 @@ fn indent_comment(string: String, level: u8) -> String {
 
 fn cleanup(comment: String) -> String {
     let re = Regex::new(r"<.*?>").unwrap();
-    let result = re.replace_all(&comment, "");
+    let cleaned: String = comment.chars()
+        .map(|x| match x {
+            '’' => '\'',
+            '“' => '"',
+            '”' => '"',
+            _ => x
+        }).collect();
+    let result = re.replace_all(&cleaned, "");
     result.to_string()
 }
 
@@ -136,8 +149,8 @@ Last updated {}
 ", utc)
 }
 
-fn comment_title() -> String {
-    "
+fn comment_title(story: Story) -> String {
+    format!("
  .----------------.
 | .--------------. |
 | |   _____      | |
@@ -151,7 +164,10 @@ fn comment_title() -> String {
  '----------------'
 
 
-".to_owned()
+Viewing comments for \"{}\"
+---
+
+", story.title)
 }
 
 fn pretty_date(date_string: &String) -> String {
