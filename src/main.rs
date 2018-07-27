@@ -117,8 +117,10 @@ fn cleanup(comment: String) -> String {
     let cleaned: String = comment.chars()
         .map(|x| match x {
             '’' => '\'',
+            '‘' => '\'',
             '“' => '"',
             '”' => '"',
+            '…' => '.',
             _ => x
         }).collect();
     let result = re.replace_all(&cleaned, "");
