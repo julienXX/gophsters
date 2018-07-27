@@ -60,7 +60,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
     for story in stories {
         println!("Building story: {}", story.title);
 
-        let story_line = format!("h[{}] - {}\tURL:{}\n", story.upvotes, story.title, story.short_id_url);
+        let story_line = format!("h[{}] - {}\tURL:{}\n", story.score, story.title, story.short_id_url);
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
         let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
         build_comments_for(story);
@@ -95,7 +95,7 @@ fn build_comments_page(comments: Vec<Comment>, story: Story) -> String {
     let mut c = String::new();
     c.push_str(&comment_title(story));
     for comment in comments {
-        let meta_line = indent_comment(format!("> {} commented:\n", comment.commenting_user.username), comment.indent_level);
+        let meta_line = indent_comment(format!("> {} commented [{}]:\n", comment.commenting_user.username, comment.score), comment.indent_level);
         let comment_line = format!("{}\n", indent_comment(cleanup(comment.comment), comment.indent_level));
         c.push_str(&meta_line);
         c.push_str(&comment_line);
@@ -222,7 +222,6 @@ fn fetch_comments(url: hyper::Uri) -> impl Future<Item=(Vec<Comment>, String), E
 struct Story {
     title: String,
     created_at: String,
-    upvotes: u8,
     score: i8,
     comment_count: u8,
     short_id: String,
@@ -246,7 +245,6 @@ struct CommentRoot {
 struct Comment {
     comment: String,
     created_at: String,
-    upvotes: u8,
     score: i8,
     indent_level: u8,
     commenting_user: User,
