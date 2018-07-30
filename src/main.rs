@@ -15,6 +15,9 @@ use regex::Regex;
 extern crate textwrap;
 use textwrap::{fill, indent};
 
+extern crate deunicode;
+use deunicode::deunicode;
+
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -60,7 +63,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
     for story in stories {
         println!("Building story: {}", story.title);
 
-        let story_line = format!("h[{}] - {}\tURL:{}\n", story.score, story.title, story.short_id_url);
+        let story_line = format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url);
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
         let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
         build_comments_for(story);
@@ -114,15 +117,7 @@ fn indent_comment(string: String, level: u8) -> String {
 
 fn cleanup(comment: String) -> String {
     let re = Regex::new(r"<.*?>").unwrap();
-    let cleaned: String = comment.chars()
-        .map(|x| match x {
-            '’' => '\'',
-            '‘' => '\'',
-            '“' => '"',
-            '”' => '"',
-            '…' => '.',
-            _ => x
-        }).collect();
+    let cleaned: String = deunicode(&comment);
     let result = re.replace_all(&cleaned, "");
     result.to_string()
 }
@@ -169,7 +164,7 @@ fn comment_title(story: Story) -> String {
 Viewing comments for \"{}\"
 ---
 
-", story.title)
+", deunicode(&story.title))
 }
 
 fn pretty_date(date_string: &String) -> String {
