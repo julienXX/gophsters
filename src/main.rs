@@ -63,7 +63,13 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
     for story in stories {
         println!("Building story: {}", story.title);
 
-        let story_line = format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.url);
+        let story_has_url = story.url.is_empty();
+        let story_line = if story_has_url {
+            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
+        } else {
+            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.url)
+        };
+
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
         let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
         build_comments_for(story);
