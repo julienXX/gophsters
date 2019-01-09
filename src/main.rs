@@ -12,14 +12,8 @@ use chrono::prelude::*;
 extern crate regex;
 use regex::Regex;
 
-extern crate textwrap;
-use textwrap::{fill, indent};
-
 extern crate deunicode;
 use deunicode::deunicode;
-
-use std::fs::File;
-use std::io::prelude::*;
 
 use hyper::Client;
 use hyper::rt::{self, Future, Stream};
@@ -32,7 +26,7 @@ fn main() {
 
     let fut = fetch_stories(url)
         .map(|stories| {
-            create_gophermap(stories).unwrap();
+            create_finger_response(stories).unwrap();
         })
         .map_err(|e| {
             match e {
@@ -42,137 +36,32 @@ fn main() {
         });
 
     rt::run(fut);
-
-    println!("Done.")
 }
 
-fn create_gophermap(stories: Vec<Story>) -> std::io::Result<()> {
-    let mut f = File::create("gophermap")?;
-    let gophermap = stories_to_gophermap(stories);
-    f.write_all(&gophermap.as_bytes())?;
+fn create_finger_response(stories: Vec<Story>) -> std::io::Result<()> {
+    let finger_response = stories_to_finger(stories);
+    println!("{}", finger_response);
     Ok(())
 }
 
-fn termination_line() -> String {
-    "\r\n.".to_owned()
-}
-
-fn stories_to_gophermap(stories: Vec<Story>) -> String {
-    let mut gophermap = String::new();
-    gophermap.push_str(&main_title());
+fn stories_to_finger(stories: Vec<Story>) -> String {
+    let mut finger = String::new();
     for story in stories {
-        println!("Building story: {}", story.title);
-
         let story_has_url = story.url.is_empty();
         let story_line = if story_has_url {
-            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
+            format!("\n[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
         } else {
             let re = Regex::new(r"^https").unwrap();
             let story_url = re.replace_all(&story.url, "http");
-            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story_url)
+            format!("\n[{}] - {}\n{}\n", story.score, deunicode(&story.title), story_url)
         };
 
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
-        let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
-        build_comments_for(story);
 
-        gophermap.push_str(&story_line);
-        gophermap.push_str(&meta_line);
-        gophermap.push_str(&comment_line);
+        finger.push_str(&story_line);
+        finger.push_str(&meta_line);
     }
-    gophermap.push_str(&termination_line());
-    gophermap
-}
-
-fn build_comments_for(story: Story) {
-    let url = format!("{}.json", &story.short_id_url).parse().unwrap();
-    let fut = fetch_comments(url)
-        .map(|(comments, short_id)| {
-            let mut f = File::create(format!("{}.txt", short_id)).unwrap();
-            let coms = build_comments_page(comments, story);
-            f.write_all(&coms.as_bytes()).expect("could not write file");
-        })
-        .map_err(|e| {
-            match e {
-                FetchError::Http(e) => eprintln!("http error: {}", e),
-                FetchError::Json(e) => eprintln!("json parsing error: {}", e),
-            }
-        });
-
-    rt::run(fut);
-}
-
-fn build_comments_page(comments: Vec<Comment>, story: Story) -> String {
-    let mut c = String::new();
-    c.push_str(&comment_title(story));
-    for comment in comments {
-        let meta_line = indent_comment(format!("> {} commented [{}]:\n", comment.commenting_user.username, comment.score), comment.indent_level);
-        let comment_line = format!("{}\n", indent_comment(cleanup(comment.comment), comment.indent_level));
-        c.push_str(&meta_line);
-        c.push_str(&comment_line);
-    }
-    c.push_str(&termination_line());
-    c
-}
-
-fn indent_comment(string: String, level: u8) -> String {
-    match level {
-        1 => indent(&fill(&string, 60), ""),
-        2 => indent(&fill(&string, 60), "\t"),
-        _ => indent(&fill(&string, 60), "\t\t"),
-    }
-}
-
-fn cleanup(comment: String) -> String {
-    let re = Regex::new(r"<.*?>").unwrap();
-    let cleaned: String = deunicode(&comment);
-    let result = re.replace_all(&cleaned, "");
-    result.to_string()
-}
-
-fn main_title() -> String {
-    let utc = Utc::now().format("%a %b %e %T %Y").to_string();
-    format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
-This is an unofficial Lobste.rs mirror on gopher.
-You can find the 25 hottest stories and their comments.
-Sync happens every 10 minutes or so.
-
-Last updated {}
-
-", utc)
-}
-
-fn comment_title(story: Story) -> String {
-    format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
-
-Viewing comments for \"{}\"
----
-
-", deunicode(&story.title))
+    finger
 }
 
 fn pretty_date(date_string: &String) -> String {
@@ -203,26 +92,6 @@ fn fetch_stories(url: hyper::Uri) -> impl Future<Item=Vec<Story>, Error=FetchErr
         .from_err()
 }
 
-fn fetch_comments(url: hyper::Uri) -> impl Future<Item=(Vec<Comment>, String), Error=FetchError> {
-    let https = HttpsConnector::new(4).expect("TLS initialization failed");
-    let client = Client::builder()
-        .build::<_, hyper::Body>(https);
-
-    client
-        .get(url)
-        .and_then(|res| {
-            res.into_body().concat2()
-        })
-        .from_err::<FetchError>()
-        .and_then(|body| {
-            let body_string = std::str::from_utf8(&body).unwrap();
-            let json_body: CommentRoot = serde_json::from_str(&body_string)?;
-            let comments = json_body.comments;
-            Ok((comments, json_body.short_id))
-        })
-        .from_err()
-}
-
 #[derive(Deserialize, Debug)]
 struct Story {
     title: String,
@@ -239,21 +108,6 @@ struct Story {
 #[derive(Deserialize, Debug)]
 struct User {
     username: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct CommentRoot {
-    short_id: String,
-    comments: Vec<Comment>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Comment {
-    comment: String,
-    created_at: String,
-    score: u8,
-    indent_level: u8,
-    commenting_user: User,
 }
 
 enum FetchError {
