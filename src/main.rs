@@ -49,7 +49,7 @@ fn stories_to_finger(stories: Vec<Story>) -> String {
     for story in stories {
         let story_has_url = story.url.is_empty();
         let story_line = if story_has_url {
-            format!("\n[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
+            format!("\n[{}] - {}\n", story.score, deunicode(&story.title))
         } else {
             let re = Regex::new(r"^https").unwrap();
             let story_url = re.replace_all(&story.url, "http");
@@ -57,9 +57,11 @@ fn stories_to_finger(stories: Vec<Story>) -> String {
         };
 
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
+        let comments_line = format!("View {} comments {}\n", story.comment_count, story.short_id_url);
 
         finger.push_str(&story_line);
         finger.push_str(&meta_line);
+        finger.push_str(&comments_line);
     }
     finger
 }
