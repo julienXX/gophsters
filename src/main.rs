@@ -25,7 +25,7 @@ use hyper::Client;
 use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
 
-const API_URL: &'static str = "https://lobste.rs/hottest.json";
+const API_URL: &'static str = "https://tilde.news/hottest.json";
 
 fn main() {
     let url = API_URL.parse().unwrap();
@@ -67,7 +67,9 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
         let story_line = if story_has_url {
             format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
         } else {
-            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.url)
+            let re = Regex::new(r"^https").unwrap();
+            let story_url = re.replace_all(&story.url, "http");
+            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story_url)
         };
 
         let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
@@ -131,19 +133,19 @@ fn cleanup(comment: String) -> String {
 fn main_title() -> String {
     let utc = Utc::now().format("%a %b %e %T %Y").to_string();
     format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
+ .-----------------.
+| .---------------. |
+| |   _________   | |
+| |  |___   ___|  | |
+| |      | |      | |
+| |      | |      | |
+| |     _| |_     | |
+| |    |_____|    | |
+| |               | |
+| '---------------' |
+ '-----------------'
 
-This is an unofficial Lobste.rs mirror on gopher.
+This is an unofficial Tilde.news mirror on gopher.
 You can find the 25 hottest stories and their comments.
 Sync happens every 10 minutes or so.
 
@@ -154,18 +156,17 @@ Last updated {}
 
 fn comment_title(story: Story) -> String {
     format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
+ .-----------------.
+| .---------------. |
+| |   _________   | |
+| |  |___   ___|  | |
+| |      | |      | |
+| |      | |      | |
+| |     _| |_     | |
+| |    |_____|    | |
+| |               | |
+| '---------------' |
+ '-----------------'
 
 Viewing comments for \"{}\"
 ---
