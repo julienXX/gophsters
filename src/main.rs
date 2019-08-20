@@ -2,7 +2,8 @@ use chrono::prelude::*;
 use regex::Regex;
 use textwrap::{fill, indent};
 use deunicode::deunicode;
-use serde::{Serialize,Deserialize};
+use serde::Deserialize;
+use structopt::StructOpt;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -10,11 +11,27 @@ use std::io::prelude::*;
 use hyper::Client;
 use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
+use url::Url;
 
-const API_URL: &'static str = "https://lobste.rs/hottest.json";
+#[derive(Debug, StructOpt)]
+#[structopt(name = "gophsters", about = "Generate a gophermap from lobste.rs recent stories")]
+struct Cli {
+    /// The host to fetch Lobsters articles from
+    #[structopt(short = "h", long = "host", default_value = "lobste.rs")]
+    host: String,
+}
 
 fn main() {
-    let url = API_URL.parse().unwrap();
+    let cli = Cli::from_args();
+
+    let host = match cli.host.starts_with("http") {
+        true => cli.host,
+        false => format!("https://{}", cli.host)
+    };
+
+    let base_url = Url::parse(&host).expect("Could not parse hostname");
+    // join() doesn't care about a trailing slash passed as host
+    let url = base_url.join("hottest.json").unwrap().as_str().parse().unwrap();
 
     let fut = fetch_stories(url)
         .map(|stories| {
