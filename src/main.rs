@@ -1,22 +1,8 @@
-// #![deny(warnings)]
-extern crate hyper;
-extern crate hyper_tls;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
-
-extern crate chrono;
 use chrono::prelude::*;
-
-extern crate regex;
 use regex::Regex;
-
-extern crate textwrap;
 use textwrap::{fill, indent};
-
-extern crate deunicode;
 use deunicode::deunicode;
+use serde::{Serialize,Deserialize};
 
 use std::fs::File;
 use std::io::prelude::*;
