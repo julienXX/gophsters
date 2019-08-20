@@ -1,4 +1,6 @@
 /target
 **/*.rs.bk
+**/.*.sw*
 *.txt
 gophermap
+Cargo.lock
