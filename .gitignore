@@ -3,4 +3,3 @@
 **/.*.sw*
 *.txt
 gophermap
-Cargo.lock
