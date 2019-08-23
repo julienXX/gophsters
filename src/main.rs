@@ -19,6 +19,7 @@ struct Cli {
     /// The host to fetch Lobsters articles from
     #[structopt(short = "h", long = "host", default_value = "lobste.rs")]
     host: String,
+    // The folder 
 }
 
 fn main() {
