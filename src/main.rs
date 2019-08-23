@@ -13,13 +13,65 @@ use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
 use url::Url;
 
+#use tera::{Tera,compile_templates};
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "gophsters", about = "Generate a gophermap from lobste.rs recent stories")]
 struct Cli {
     /// The host to fetch Lobsters articles from
     #[structopt(short = "h", long = "host", default_value = "lobste.rs")]
     host: String,
+    // The folder 
 }
+
+const _GOPHER_MAP: &str = r#"""
+ .----------------.
+| .--------------. |
+| |   _____      | |
+| |  |_   _|     | |
+| |    | |       | |
+| |    | |   _   | |
+| |   _| |__/ |  | |
+| |  |________|  | |
+| |              | |
+| '--------------' |
+ '----------------'
+
+This is an unofficial Lobste.rs mirror on gopher.
+You can find the 25 hottest stories and their comments.
+Sync happens every 10 minutes or so.
+
+Last updated {}
+
+{% for story in stories %}
+{{ story.line }}
+{{ story.meta }}
+{{ story.comment }}
+{% endfor %}
+"""#;
+
+const _GOPHER_PAGE: &str = r#"""
+ .----------------.
+| .--------------. |
+| |   _____      | |
+| |  |_   _|     | |
+| |    | |       | |
+| |    | |   _   | |
+| |   _| |__/ |  | |
+| |  |________|  | |
+| |              | |
+| '--------------' |
+ '----------------'
+
+
+Viewing comments for "{{ title }}"
+---
+{% for comment in comments %}
+{{ comment.user }} commented [{{ comment.score }}]
+{{ comment.text | cleanup(comment.indentation) }}
+{% endfor %}
+"""#;
+
 
 fn main() {
     let cli = Cli::from_args();
@@ -75,7 +127,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
             format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story_url)
         };
 
-        let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
+        let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user, story.tags.join(", "));
         let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
         build_comments_for(story);
 
@@ -109,7 +161,7 @@ fn build_comments_page(comments: Vec<Comment>, story: Story) -> String {
     let mut c = String::new();
     c.push_str(&comment_title(story));
     for comment in comments {
-        let meta_line = indent_comment(format!("> {} commented [{}]:\n", comment.commenting_user.username, comment.score), comment.indent_level);
+        let meta_line = indent_comment(format!("> {} commented [{}]:\n", comment.commenting_user, comment.score), comment.indent_level);
         let comment_line = format!("{}\n", indent_comment(cleanup(comment.comment), comment.indent_level));
         c.push_str(&meta_line);
         c.push_str(&comment_line);
@@ -239,10 +291,7 @@ struct Story {
     submitter_user: User,
 }
 
-#[derive(Deserialize, Debug)]
-struct User {
-    username: String,
-}
+type User = String;
 
 #[derive(Deserialize, Debug)]
 struct CommentRoot {
