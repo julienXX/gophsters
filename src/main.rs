@@ -25,10 +25,7 @@ struct Cli {
 fn main() {
     let cli = Cli::from_args();
 
-    let host = match cli.host.starts_with("http") {
-        true => cli.host,
-        false => format!("https://{}", cli.host)
-    };
+    let host = if cli.host.starts_with("http") { cli.host } else { format!("https://{}", cli.host) };
 
     let base_url = Url::parse(&host).expect("Could not parse hostname");
     // join() doesn't care about a trailing slash passed as host
@@ -71,8 +68,7 @@ fn stories_to_gophermap(stories: Vec<Story>) -> String {
         let story_line = if story_has_url {
             format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
         } else {
-            let re = Regex::new(r"^https").unwrap();
-            let story_url = re.replace_all(&story.url, "http");
+            let story_url = if story.url.starts_with("https") { story.url.replacen("https", "http", 1) } else { story.url.clone() };
             format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story_url)
         };
 
@@ -179,7 +175,7 @@ Viewing comments for \"{}\"
 ", deunicode(&story.title))
 }
 
-fn pretty_date(date_string: &String) -> String {
+fn pretty_date(date_string: &str) -> String {
     let parsed_date = date_string.parse::<DateTime<Utc>>();
     let date = match parsed_date {
         Ok(date) => date,
