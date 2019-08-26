@@ -13,8 +13,6 @@ use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
 use url::Url;
 
-#use tera::{Tera,compile_templates};
-
 #[derive(Debug, StructOpt)]
 #[structopt(name = "gophsters", about = "Generate a gophermap from lobste.rs recent stories")]
 struct Cli {
@@ -23,55 +21,6 @@ struct Cli {
     host: String,
     // The folder 
 }
-
-const _GOPHER_MAP: &str = r#"""
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
-This is an unofficial Lobste.rs mirror on gopher.
-You can find the 25 hottest stories and their comments.
-Sync happens every 10 minutes or so.
-
-Last updated {}
-
-{% for story in stories %}
-{{ story.line }}
-{{ story.meta }}
-{{ story.comment }}
-{% endfor %}
-"""#;
-
-const _GOPHER_PAGE: &str = r#"""
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
-
-Viewing comments for "{{ title }}"
----
-{% for comment in comments %}
-{{ comment.user }} commented [{{ comment.score }}]
-{{ comment.text | cleanup(comment.indentation) }}
-{% endfor %}
-"""#;
-
 
 fn main() {
     let cli = Cli::from_args();
