@@ -231,7 +231,7 @@ fn fetch_comments(url: hyper::Uri) -> impl Future<Item=(Vec<Comment>, String), E
 struct Story {
     title: String,
     created_at: String,
-    score: u8,
+    score: i8,
     comment_count: u8,
     short_id: String,
     short_id_url: String,
@@ -255,7 +255,7 @@ struct CommentRoot {
 struct Comment {
     comment: String,
     created_at: String,
-    score: u8,
+    score: i8,
     indent_level: u8,
     commenting_user: User,
 }
