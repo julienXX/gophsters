@@ -5,8 +5,6 @@ authors = ["Julien Blanchard <julien@sideburns.eu>"]
 edition = "2018"
 
 [dependencies]
-hyper = "0.12"
-hyper-tls = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "*"
 chrono = "*"
@@ -15,3 +13,5 @@ textwrap ="*"
 deunicode = "0.4.0"
 structopt = "0.2"
 url = "2.1"
+reqwest = "0.9"
+error-chain = "0.12"

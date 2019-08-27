@@ -10,11 +10,10 @@ fn termination_line() -> String {
 }
 
 pub fn stories_to_gophermap(stories: &Vec<Story>) -> String {
+    println!("Building gophermap");
     let mut gophermap = String::new();
     gophermap.push_str(&main_title());
     for story in stories {
-        println!("Building story: {}", story.title);
-
         let story_has_url = story.url.is_empty();
         let story_line = if story_has_url {
             format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
@@ -34,7 +33,8 @@ pub fn stories_to_gophermap(stories: &Vec<Story>) -> String {
     gophermap
 }
 
-pub fn build_comments_page(comments: &Vec<Comment>, story: Story) -> String {
+pub fn build_comments_page(comments: &Vec<Comment>, story: &Story) -> String {
+    println!("Building comments for story: {}", &story.title);
     let mut c = String::new();
     c.push_str(&comment_title(story));
     for comment in comments {
@@ -86,7 +86,7 @@ Last updated {}
 ", utc)
 }
 
-fn comment_title(story: Story) -> String {
+fn comment_title(story: &Story) -> String {
     format!("
  .----------------.
 | .--------------. |
