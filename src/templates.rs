@@ -10,7 +10,6 @@ fn termination_line() -> String {
 }
 
 pub fn stories_to_gophermap(stories: &Vec<Story>) -> String {
-    println!("Building gophermap");
     let mut gophermap = String::new();
     gophermap.push_str(&main_title());
     for story in stories {
@@ -34,7 +33,6 @@ pub fn stories_to_gophermap(stories: &Vec<Story>) -> String {
 }
 
 pub fn build_comments_page(comments: &Vec<Comment>, story: &Story) -> String {
-    println!("Building comments for story: {}", &story.title);
     let mut c = String::new();
     c.push_str(&comment_title(story));
     for comment in comments {
