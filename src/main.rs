@@ -26,7 +26,7 @@ error_chain!{
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "gophsters", about = "Generate a gophermap from lobste.rs recent stories")]
+#[structopt(name = "gophsters", about = "Generate a gemini file from lobste.rs recent stories")]
 struct Cli {
     /// The host to fetch Lobsters articles from
     #[structopt(short = "h", long = "host", default_value = "lobste.rs")]
@@ -44,12 +44,12 @@ fn main() -> Result<()> {
 
     let stories = fetch::stories(&url.as_str())?;
 
-    match create_gophermap(&stories) {
+    match create_geminimap(&stories) {
         Ok(_) => {
-            println!("Built gophermap for server {}.", &host);
+            println!("Built geminimap for server {}.", &host);
         },
         Err(e) => {
-            eprintln!("Failed to build gophermap for server {} because of error:", &host);
+            eprintln!("Failed to build geminimap for server {} because of error:", &host);
             return Err(e);
         }
     }
@@ -73,16 +73,16 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn create_gophermap(stories: &Vec<Story>) -> Result<()> {
-    let mut f = File::create("gophermap")?;
-    let gophermap = templates::stories_to_gophermap(&stories);
-    f.write_all(&gophermap.as_bytes())?;
+fn create_geminimap(stories: &Vec<Story>) -> Result<()> {
+    let mut f = File::create("index.gmi")?;
+    let geminimap = templates::stories_to_geminimap(&stories);
+    f.write_all(&geminimap.as_bytes())?;
     Ok(())
 }
 
 fn build_comments_for(story: &Story) -> Result<()> {
     let comments = fetch::comments(&story.short_id_url)?;
-    let mut f = File::create(format!("{}.txt", story.short_id))?;
+    let mut f = File::create(format!("{}.gmi", story.short_id))?;
     let coms = templates::build_comments_page(&comments, story);
     f.write_all(&coms.as_bytes())?;
     Ok(())

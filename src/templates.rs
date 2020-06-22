@@ -5,31 +5,26 @@ use deunicode::deunicode;
 
 use crate::data::{Comment, Story};
 
-fn termination_line() -> String {
-    "\r\n.".to_owned()
-}
-
-pub fn stories_to_gophermap(stories: &Vec<Story>) -> String {
-    let mut gophermap = String::new();
-    gophermap.push_str(&main_title());
+pub fn stories_to_geminimap(stories: &Vec<Story>) -> String {
+    let mut geminimap = String::new();
+    geminimap.push_str(&main_title());
     for story in stories {
         let story_has_url = story.url.is_empty();
         let story_line = if story_has_url {
-            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story.short_id_url)
+            format!("=> {} [{}] - {}\n", story.short_id_url, story.score, deunicode(&story.title))
         } else {
             let story_url = if story.url.starts_with("https") { story.url.replacen("https", "http", 1) } else { story.url.clone() };
-            format!("h[{}] - {}\tURL:{}\n", story.score, deunicode(&story.title), story_url)
+            format!("=> {} [{}] - {}\n", story_url, story.score, deunicode(&story.title))
         };
 
-        let meta_line = format!("Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
-        let comment_line = format!("0View comments ({})\t{}\n\n", &story.comment_count, format!("{}.txt", &story.short_id));
+        let meta_line = format!("> Submitted {} by {} | {}\n", pretty_date(&story.created_at), story.submitter_user.username, story.tags.join(", "));
+        let comment_line = format!("=> {} View comments ({})\n\n", format!("{}.gmi", &story.short_id), &story.comment_count);
 
-        gophermap.push_str(&story_line);
-        gophermap.push_str(&meta_line);
-        gophermap.push_str(&comment_line);
+        geminimap.push_str(&story_line);
+        geminimap.push_str(&meta_line);
+        geminimap.push_str(&comment_line);
     }
-    gophermap.push_str(&termination_line());
-    gophermap
+    geminimap
 }
 
 pub fn build_comments_page(comments: &Vec<Comment>, story: &Story) -> String {
@@ -41,7 +36,6 @@ pub fn build_comments_page(comments: &Vec<Comment>, story: &Story) -> String {
         c.push_str(&meta_line);
         c.push_str(&comment_line);
     }
-    c.push_str(&termination_line());
     c
 }
 
@@ -63,19 +57,20 @@ fn cleanup(comment: &str) -> String {
 fn main_title() -> String {
     let utc = Utc::now().format("%a %b %e %T %Y").to_string();
     format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
-This is an unofficial Lobste.rs mirror on gopher.
+```
+ .-----------------.
+| .---------------. |
+| |   _________   | |
+| |  |___   ___|  | |
+| |      | |      | |
+| |      | |      | |
+| |     _| |_     | |
+| |    |_____|    | |
+| |               | |
+| '---------------' |
+ '-----------------'
+```
+This is an unofficial Tilde.news mirror on gopher.
 You can find the 25 hottest stories and their comments.
 Sync happens every 10 minutes or so.
 
@@ -86,18 +81,19 @@ Last updated {}
 
 fn comment_title(story: &Story) -> String {
     format!("
- .----------------.
-| .--------------. |
-| |   _____      | |
-| |  |_   _|     | |
-| |    | |       | |
-| |    | |   _   | |
-| |   _| |__/ |  | |
-| |  |________|  | |
-| |              | |
-| '--------------' |
- '----------------'
-
+```
+ .-----------------.
+| .---------------. |
+| |   _________   | |
+| |  |___   ___|  | |
+| |      | |      | |
+| |      | |      | |
+| |     _| |_     | |
+| |    |_____|    | |
+| |               | |
+| '---------------' |
+ '-----------------'
+```
 
 Viewing comments for \"{}\"
 ---
