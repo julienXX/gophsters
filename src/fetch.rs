@@ -1,6 +1,6 @@
-use reqwest::get;
+use crate::data::{Comment, CommentRoot, Story};
 use crate::Result;
-use crate::data::{Story,Comment,CommentRoot};
+use reqwest::get;
 
 fn download(url: &str) -> Result<String> {
     Ok(get(url)?.text()?)

@@ -1,4 +1,3 @@
-
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -30,6 +29,6 @@ pub struct Comment {
     pub comment: String,
     pub created_at: String,
     pub score: i8,
-    pub indent_level: u8,
+    pub depth: u8,
     pub commenting_user: User,
 }

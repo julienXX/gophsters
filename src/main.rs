@@ -2,6 +2,8 @@ use structopt::StructOpt;
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::thread::sleep;
+use std::time::Duration;
 
 use url::Url;
 
@@ -9,15 +11,15 @@ use url::Url;
 // i.e. parallelized blocking network IO via rayon
 use rayon::prelude::*;
 
-mod templates;
-mod fetch;
 mod data;
+mod fetch;
+mod templates;
 use data::Story;
 
 // For simple automagic error handling
 use error_chain::error_chain;
 
-error_chain!{
+error_chain! {
     foreign_links {
         Http(reqwest::Error);
         Json(serde_json::Error);
@@ -36,7 +38,11 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::from_args();
 
-    let host = if cli.host.starts_with("http") { cli.host } else { format!("https://{}", cli.host) };
+    let host = if cli.host.starts_with("http") {
+        cli.host
+    } else {
+        format!("https://{}", cli.host)
+    };
 
     let base_url = Url::parse(&host).expect("Could not parse hostname");
     // join() doesn't care about a trailing slash passed as host
@@ -55,19 +61,29 @@ fn main() -> Result<()> {
     }
 
     // Configure rayon to use maximum 4 threads (so we don't get blocked by the lobsters API)
-    rayon::ThreadPoolBuilder::new().num_threads(4).build_global().unwrap();
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build_global()
+        .unwrap();
 
     // Sweet, sweet rayon for parellel processing
-    stories.par_iter().for_each(|story| {
-        match build_comments_for(&story) {
+    stories
+        .par_iter()
+        .for_each(|story| match build_comments_for(&story) {
             Ok(_) => {
-                println!("Built comments for page {}", &story.title);
-            },
-            Err(e) => {
-                eprintln!("Failed to build comments for page {} because of error:\n{}", &story.title, e);
+                if story.comment_count != 0 {
+                    println!("Built comments for page {}", &story.title);
+                } else {
+                    println!("Page {} has no comments", &story.title);
+                }
             }
-        }
-    });
+            Err(e) => {
+                eprintln!(
+                    "Failed to build comments for page {} because of error {}:\n{}",
+                    &story.title, &story.comment_count, e
+                );
+            }
+        });
 
     println!("Done.");
     Ok(())
@@ -81,6 +97,7 @@ fn create_geminimap(stories: &Vec<Story>) -> Result<()> {
 }
 
 fn build_comments_for(story: &Story) -> Result<()> {
+    sleep(Duration::from_millis(1000));
     let comments = fetch::comments(&story.short_id_url)?;
     let mut f = File::create(format!("{}.gmi", story.short_id))?;
     let coms = templates::build_comments_page(&comments, story);
