@@ -17,9 +17,9 @@ use deunicode::deunicode;
 const API_URL: &'static str = "https://lobste.rs/hottest.json";
 
 fn main() {
-    let stories = match fetch_stories(API_URL.to_string()) {
+    match fetch_stories(API_URL.to_string()) {
         Ok(stories) => create_finger_response(stories).unwrap(),
-        Err(e) => panic!(e),
+        Err(e) => std::panic::panic_any(e),
     };
 }
 
@@ -34,12 +34,12 @@ fn stories_to_finger(stories: Vec<Story>) -> String {
     for story in stories {
         let story_has_url = story.url.is_empty();
         let story_line = if story_has_url {
-            format!("\n[{}] - {}\n", story.score, deunicode(&story.title))
+            format!("\n[{}] {}\n", story.score, deunicode(&story.title))
         } else {
             let re = Regex::new(r"^https").unwrap();
             let story_url = re.replace_all(&story.url, "http");
             format!(
-                "\n[{}] - {}\n{}\n",
+                "\n[{}] {}\n{}\n",
                 story.score,
                 deunicode(&story.title),
                 story_url
@@ -49,7 +49,7 @@ fn stories_to_finger(stories: Vec<Story>) -> String {
         let meta_line = format!(
             "Submitted {} by {} | {}\n",
             pretty_date(&story.created_at),
-            story.submitter_user.username,
+            story.submitter_user,
             story.tags.join(", ")
         );
         let comments_line = format!(
@@ -74,27 +74,19 @@ fn pretty_date(date_string: &String) -> String {
 }
 
 fn fetch_stories(url: String) -> Result<Vec<Story>, reqwest::Error> {
-    let client = reqwest::blocking::Client::new();
-    let mut response = client.get(&url).send()?;
-
+    let response = reqwest::blocking::get(&url)?;
     let stories: Vec<Story> = response.json()?;
     Ok(stories)
 }
 
 #[derive(Deserialize, Debug)]
 struct Story {
-    title: String,
+    short_id_url: String,
     created_at: String,
+    title: String,
+    url: String,
     score: u8,
     comment_count: u8,
-    short_id: String,
-    short_id_url: String,
-    url: String,
+    submitter_user: String,
     tags: Vec<String>,
-    submitter_user: User,
-}
-
-#[derive(Deserialize, Debug)]
-struct User {
-    username: String,
 }

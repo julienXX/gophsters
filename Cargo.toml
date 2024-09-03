@@ -2,6 +2,7 @@
 name = "gophsters"
 version = "0.1.0"
 authors = ["Julien Blanchard <julien@sideburns.eu>"]
+edition = "2021"
 
 [dependencies]
 reqwest = { version = "*", features = ["blocking", "json"] }
